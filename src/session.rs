@@ -5,13 +5,13 @@ use libc::{self, c_char, c_int, c_long, c_uint, c_void};
 use parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
 use std::borrow::Cow;
 use std::ffi::CString;
-use std::ptr::{null, null_mut};
 use std::mem;
 #[cfg(unix)]
 use std::os::unix::io::{AsRawFd, RawFd};
 #[cfg(windows)]
 use std::os::windows::io::{AsRawSocket, RawSocket};
 use std::path::Path;
+use std::ptr::{null, null_mut};
 use std::slice;
 use std::str;
 use std::sync::Arc;
@@ -132,7 +132,8 @@ pub struct Session {
 
 /// Metadata returned about a remote file when received via `scp`.
 pub struct ScpFileStat {
-    stat: libc::stat,
+    /// The libc stat field.
+    pub stat: libc::stat,
 }
 
 /// The io direction an application has to wait for in order not to block.
@@ -517,10 +518,7 @@ impl Session {
                 username.len() as c_uint,
                 pubkey.as_ref().map(|s| s.as_ptr()).unwrap_or(null()),
                 privatekey.as_ptr(),
-                passphrase
-                    .as_ref()
-                    .map(|s| s.as_ptr())
-                    .unwrap_or(null()),
+                passphrase.as_ref().map(|s| s.as_ptr()).unwrap_or(null()),
             )
         })
     }
@@ -554,17 +552,11 @@ impl Session {
                 inner.raw,
                 username.as_ptr() as *const _,
                 username.len() as size_t,
-                pubkeydata
-                    .as_ref()
-                    .map(|s| s.as_ptr())
-                    .unwrap_or(null()),
+                pubkeydata.as_ref().map(|s| s.as_ptr()).unwrap_or(null()),
                 pubkeydata_len as size_t,
                 privatekeydata.as_ptr(),
                 privatekeydata_len as size_t,
-                passphrase
-                    .as_ref()
-                    .map(|s| s.as_ptr())
-                    .unwrap_or(null()),
+                passphrase.as_ref().map(|s| s.as_ptr()).unwrap_or(null()),
             )
         })
     }
@@ -602,10 +594,7 @@ impl Session {
                 username.len() as c_uint,
                 publickey.as_ptr(),
                 privatekey.as_ptr(),
-                passphrase
-                    .as_ref()
-                    .map(|s| s.as_ptr())
-                    .unwrap_or(null()),
+                passphrase.as_ref().map(|s| s.as_ptr()).unwrap_or(null()),
                 hostname.as_ptr() as *const _,
                 hostname.len() as c_uint,
                 local_username.as_ptr() as *const _,
@@ -1084,7 +1073,9 @@ impl Session {
     ///
     pub fn trace(&self, bitmask: TraceFlags) {
         let inner = self.inner();
-        unsafe { let _ = raw::libssh2_trace(inner.raw, bitmask.bits() as c_int); }
+        unsafe {
+            let _ = raw::libssh2_trace(inner.raw, bitmask.bits() as c_int);
+        }
     }
 }
 
